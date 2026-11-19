@@ -1,0 +1,185 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Hardened Global Helpers
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId && request.auth.token.email_verified == true;
+    }
+
+    function userExistsOrCreated(userId) {
+      return exists(/databases/$(database)/documents/users/$(userId)) ||
+        existsAfter(/databases/$(database)/documents/users/$(userId));
+    }
+
+    function subjectExistsOrCreated(userId, subjectId) {
+      return exists(/databases/$(database)/documents/users/$(userId)/subjects/$(subjectId)) ||
+        existsAfter(/databases/$(database)/documents/users/$(userId)/subjects/$(subjectId));
+    }
+
+    // 3. Entity Validation Blueprints
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['ownerId', 'displayName', 'theme', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['ownerId', 'displayName', 'theme', 'createdAt', 'updatedAt']) &&
+        data.ownerId is string && data.ownerId == userId && isValidId(data.ownerId) &&
+        data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100 &&
+        data.theme is string && data.theme in ['light', 'dark'] &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidSubject(data, userId) {
+      return data.keys().hasAll(['ownerId', 'name', 'color', 'category', 'weeklyGoalHours', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['ownerId', 'name', 'color', 'category', 'weeklyGoalHours', 'createdAt', 'updatedAt']) &&
+        data.ownerId is string && data.ownerId == userId && isValidId(data.ownerId) &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
+        data.color is string && data.color.size() == 7 && data.color.matches('^#[0-9a-fA-F]{6}$') &&
+        data.category is string && data.category in ['Exatas', 'Humanas', 'Linguagens', 'Tecnologia', 'Outros'] &&
+        data.weeklyGoalHours is number && data.weeklyGoalHours >= 0.5 && data.weeklyGoalHours <= 80 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidStudyLog(data, userId) {
+      return data.keys().hasAll(['ownerId', 'subjectId', 'date', 'durationMinutes', 'topics', 'notes', 'goalsMet', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['ownerId', 'subjectId', 'date', 'durationMinutes', 'topics', 'notes', 'goalsMet', 'createdAt', 'updatedAt']) &&
+        data.ownerId is string && data.ownerId == userId && isValidId(data.ownerId) &&
+        data.subjectId is string && isValidId(data.subjectId) &&
+        data.date is string && data.date.size() == 10 && data.date.matches('^\\d{4}-\\d{2}-\\d{2}$') &&
+        data.durationMinutes is number && data.durationMinutes >= 1 && data.durationMinutes <= 1440 &&
+        data.topics is list && data.topics.size() >= 1 && data.topics.size() <= 15 &&
+        data.topics[0] is string && data.topics[0].size() >= 1 && data.topics[0].size() <= 120 &&
+        data.notes is string && data.notes.size() <= 1000 &&
+        data.goalsMet is bool &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidLearningGoal(data, userId) {
+      return data.keys().hasAll(['ownerId', 'subjectId', 'title', 'targetDate', 'completed', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['ownerId', 'subjectId', 'title', 'targetDate', 'completed', 'createdAt', 'updatedAt']) &&
+        data.ownerId is string && data.ownerId == userId && isValidId(data.ownerId) &&
+        data.subjectId is string && isValidId(data.subjectId) &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 200 &&
+        data.targetDate is string && data.targetDate.size() == 10 && data.targetDate.matches('^\\d{4}-\\d{2}-\\d{2}$') &&
+        data.completed is bool &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    // 4. Collection Rules
+    match /users/{userId} {
+      allow get: if isVerifiedOwner(userId) && isValidId(userId);
+      allow list: if false;
+      allow create: if isVerifiedOwner(userId) &&
+        isValidId(userId) &&
+        isValidUserProfile(incoming(), userId) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isVerifiedOwner(userId) &&
+        isValidId(userId) &&
+        isValidUserProfile(incoming(), userId) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          incoming().diff(existing()).affectedKeys().hasOnly(['theme', 'updatedAt']) ||
+          incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'theme', 'updatedAt'])
+        );
+      allow delete: if false;
+
+      match /subjects/{subjectId} {
+        allow get: if isVerifiedOwner(userId) && isValidId(userId) && isValidId(subjectId);
+        allow list: if isVerifiedOwner(userId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isVerifiedOwner(userId) &&
+          isValidId(userId) &&
+          isValidId(subjectId) &&
+          isValidSubject(incoming(), userId) &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          userExistsOrCreated(userId);
+        allow update: if isVerifiedOwner(userId) &&
+          isValidId(userId) &&
+          isValidId(subjectId) &&
+          isValidSubject(incoming(), userId) &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['name', 'color', 'category', 'weeklyGoalHours', 'updatedAt']);
+        allow delete: if isVerifiedOwner(userId) && isValidId(userId) && isValidId(subjectId);
+      }
+
+      match /logs/{logId} {
+        allow get: if isVerifiedOwner(userId) && isValidId(userId) && isValidId(logId);
+        allow list: if isVerifiedOwner(userId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isVerifiedOwner(userId) &&
+          isValidId(userId) &&
+          isValidId(logId) &&
+          isValidStudyLog(incoming(), userId) &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          userExistsOrCreated(userId) &&
+          subjectExistsOrCreated(userId, incoming().subjectId);
+        allow update: if isVerifiedOwner(userId) &&
+          isValidId(userId) &&
+          isValidId(logId) &&
+          isValidStudyLog(incoming(), userId) &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          subjectExistsOrCreated(userId, incoming().subjectId) &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['subjectId', 'date', 'durationMinutes', 'topics', 'notes', 'goalsMet', 'updatedAt']);
+        allow delete: if isVerifiedOwner(userId) && isValidId(userId) && isValidId(logId);
+      }
+
+      match /goals/{goalId} {
+        allow get: if isVerifiedOwner(userId) && isValidId(userId) && isValidId(goalId);
+        allow list: if isVerifiedOwner(userId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isVerifiedOwner(userId) &&
+          isValidId(userId) &&
+          isValidId(goalId) &&
+          isValidLearningGoal(incoming(), userId) &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          userExistsOrCreated(userId) &&
+          subjectExistsOrCreated(userId, incoming().subjectId);
+        allow update: if isVerifiedOwner(userId) &&
+          isValidId(userId) &&
+          isValidId(goalId) &&
+          isValidLearningGoal(incoming(), userId) &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          (
+            incoming().diff(existing()).affectedKeys().hasOnly(['completed', 'updatedAt']) ||
+            (
+              subjectExistsOrCreated(userId, incoming().subjectId) &&
+              incoming().diff(existing()).affectedKeys().hasOnly(['subjectId', 'title', 'targetDate', 'completed', 'updatedAt'])
+            )
+          );
+        allow delete: if isVerifiedOwner(userId) && isValidId(userId) && isValidId(goalId);
+      }
+    }
+  }
+}

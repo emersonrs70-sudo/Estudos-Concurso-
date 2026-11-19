@@ -1,17 +1,21 @@
 # EstudaPro — Sistema de Gestão de Estudos
 
-Aplicação web estática para controle de estudos semanais e mensais, acompanhamento de tempo dedicado por matéria, metas de aprendizado e gráficos de desempenho em tempo real. Projetada para funcionar diretamente no navegador e ser hospedada gratuitamente no **GitHub Pages**.
+Aplicação web para controle de estudos semanais e mensais, acompanhamento de tempo dedicado por matéria, metas de aprendizado e gráficos de desempenho em tempo real, com persistência na nuvem via **Firebase Firestore** e autenticação Google.
 
-## Como Hospedar no GitHub Pages (Passo a Passo)
+## Persistência na Nuvem (Firebase)
+
+- **Autenticação Google (`Firebase Auth`)**: Cada usuário acessa seus próprios dados de forma isolada e segura.
+- **Sincronização em Tempo Real (`Cloud Firestore`)**: Todas as alterações (matérias, registros de estudo, metas, ciclos Pomodoro e preferência de tema) são salvas diretamente no Firestore e sincronizadas entre dispositivos.
+- **Portabilidade JSON**: Também é possível exportar e importar backups `.json` diretamente para sua conta no Firestore.
+
+## Como Hospedar no GitHub Pages
 
 Este repositório já está configurado com caminho relativo (`base: './'` no `vite.config.ts`), arquivo `public/.nojekyll` e workflow automático em `.github/workflows/deploy.yml` usando **Node 22**.
 
 1. Envie todos os arquivos do projeto para a branch `main` (ou `master`) no GitHub.
-2. No seu repositório do GitHub, acesse **Settings → Pages**.
-3. Em **Build and deployment → Source**, selecione **GitHub Actions** (não deixe em *Deploy from a branch*, pois o código-fonte React/TypeScript precisa ser compilado para a pasta `dist/`).
-4. Aguarde a execução do workflow **Deploy to GitHub Pages** na aba **Actions**. Ao concluir com sucesso, o link oficial do GitHub Pages estará ativo.
-
-> **Dica caso a tela fique branca:** Verifique em **Settings → Pages → Source** se a opção selecionada é **GitHub Actions** e confirme na aba **Actions** se o deploy foi concluído sem erros. Se a fonte estiver como *Deploy from a branch* apontando para a raiz `/`, o navegador tentará abrir o `index.html` de desenvolvimento (`/src/main.tsx`) e exibirá tela branca.
+2. No seu repositório do GitHub, acesse **Settings → Pages → Build and deployment → Source** e selecione **GitHub Actions**.
+3. No **Firebase Console → Authentication → Settings → Authorized domains**, adicione o domínio do seu GitHub Pages (ex.: `seu-usuario.github.io`) para permitir o login com Google na URL publicada.
+4. Aguarde a execução do workflow **Deploy to GitHub Pages** na aba **Actions**.
 
 ## Desenvolvimento Local
 

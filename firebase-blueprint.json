@@ -1,0 +1,210 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Perfil e preferências de estudo do usuário autenticado.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "UID do usuário autenticado."
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "Nome de exibição do estudante."
+        },
+        "theme": {
+          "type": "string",
+          "enum": ["light", "dark"],
+          "description": "Tema preferido da interface."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp de criação do servidor."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp de atualização do servidor."
+        }
+      },
+      "required": ["ownerId", "displayName", "theme", "createdAt", "updatedAt"]
+    },
+    "Subject": {
+      "title": "Subject",
+      "description": "Matéria ou disciplina cadastrada pelo estudante.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "UID do proprietário da matéria."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "Nome da matéria."
+        },
+        "color": {
+          "type": "string",
+          "minLength": 7,
+          "maxLength": 7,
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "description": "Cor hexadecimal de identificação."
+        },
+        "category": {
+          "type": "string",
+          "enum": ["Exatas", "Humanas", "Linguagens", "Tecnologia", "Outros"],
+          "description": "Área do conhecimento."
+        },
+        "weeklyGoalHours": {
+          "type": "number",
+          "description": "Meta semanal de horas dedicadas."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp de criação do servidor."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp de atualização do servidor."
+        }
+      },
+      "required": ["ownerId", "name", "color", "category", "weeklyGoalHours", "createdAt", "updatedAt"]
+    },
+    "StudyLog": {
+      "title": "StudyLog",
+      "description": "Registro de sessão de estudo realizada em uma data específica.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "UID do proprietário do registro."
+        },
+        "subjectId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "ID da matéria estudada."
+        },
+        "date": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 10,
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "description": "Data local no formato YYYY-MM-DD."
+        },
+        "durationMinutes": {
+          "type": "number",
+          "description": "Duração da sessão em minutos (1 a 1440)."
+        },
+        "topics": {
+          "type": "array",
+          "description": "Lista de tópicos estudados (1 a 15 itens)."
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Anotações livres sobre a sessão."
+        },
+        "goalsMet": {
+          "type": "boolean",
+          "description": "Indica se as metas da sessão foram atingidas."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp de criação do servidor."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp de atualização do servidor."
+        }
+      },
+      "required": ["ownerId", "subjectId", "date", "durationMinutes", "topics", "notes", "goalsMet", "createdAt", "updatedAt"]
+    },
+    "LearningGoal": {
+      "title": "LearningGoal",
+      "description": "Meta de aprendizado vinculada a uma matéria.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "UID do proprietário da meta."
+        },
+        "subjectId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "ID da matéria vinculada."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Descrição da meta de aprendizado."
+        },
+        "targetDate": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 10,
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "description": "Data limite no formato YYYY-MM-DD."
+        },
+        "completed": {
+          "type": "boolean",
+          "description": "Indica se a meta foi concluída."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp de criação do servidor."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp de atualização do servidor."
+        }
+      },
+      "required": ["ownerId", "subjectId", "title", "targetDate", "completed", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Documento raiz do usuário com preferências."
+    },
+    "/users/{userId}/subjects/{subjectId}": {
+      "schema": { "$ref": "#/entities/Subject" },
+      "description": "Subcoleção de matérias do usuário."
+    },
+    "/users/{userId}/logs/{logId}": {
+      "schema": { "$ref": "#/entities/StudyLog" },
+      "description": "Subcoleção de sessões de estudo do usuário."
+    },
+    "/users/{userId}/goals/{goalId}": {
+      "schema": { "$ref": "#/entities/LearningGoal" },
+      "description": "Subcoleção de metas de aprendizado do usuário."
+    }
+  }
+}

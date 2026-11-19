@@ -1,0 +1,6 @@
+{
+  "name": "EstudaPro - Sistema de Gestão de Estudos",
+  "description": "Sistema moderno de gestão de estudos semanal e mensal com controle de tempo por matéria, metas de aprendizado, gráficos de desempenho em tempo real e calendário detalhado de dias estudados.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

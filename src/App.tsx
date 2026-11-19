@@ -42,37 +42,47 @@ interface ToastState {
   type: 'success' | 'error' | 'info';
 }
 
-export default function App() {
-  const [darkMode, setDarkMode] = useState<boolean>(() => {
+function safeReadArray<T>(key: string, fallback: T[]): T[] {
+  try {
+    const saved = localStorage.getItem(key);
+    if (!saved) return fallback;
+    const parsed = JSON.parse(saved);
+    return Array.isArray(parsed) ? parsed : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function safeReadTheme(): boolean {
+  try {
     return localStorage.getItem('estudapro_theme') === 'dark';
-  });
+  } catch {
+    return false;
+  }
+}
 
-  const [subjects, setSubjects] = useState<Subject[]>(() => {
-    try {
-      const saved = localStorage.getItem('estudapro_subjects');
-      return saved ? JSON.parse(saved) : INITIAL_SUBJECTS;
-    } catch {
-      return INITIAL_SUBJECTS;
-    }
-  });
+function safeWriteStorage(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // ignore storage quota or privacy restrictions
+  }
+}
 
-  const [logs, setLogs] = useState<StudyLog[]>(() => {
-    try {
-      const saved = localStorage.getItem('estudapro_logs');
-      return saved ? JSON.parse(saved) : INITIAL_LOGS;
-    } catch {
-      return INITIAL_LOGS;
-    }
-  });
+export default function App() {
+  const [darkMode, setDarkMode] = useState<boolean>(() => safeReadTheme());
 
-  const [goals, setGoals] = useState<LearningGoal[]>(() => {
-    try {
-      const saved = localStorage.getItem('estudapro_goals');
-      return saved ? JSON.parse(saved) : INITIAL_GOALS;
-    } catch {
-      return INITIAL_GOALS;
-    }
-  });
+  const [subjects, setSubjects] = useState<Subject[]>(() =>
+    safeReadArray('estudapro_subjects', INITIAL_SUBJECTS)
+  );
+
+  const [logs, setLogs] = useState<StudyLog[]>(() =>
+    safeReadArray('estudapro_logs', INITIAL_LOGS)
+  );
+
+  const [goals, setGoals] = useState<LearningGoal[]>(() =>
+    safeReadArray('estudapro_goals', INITIAL_GOALS)
+  );
 
   const [activeTab, setActiveTab] = useState<ViewMode>('weekly');
   const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
@@ -130,21 +140,21 @@ export default function App() {
     return () => clearTimeout(id);
   }, [toast]);
 
-  // Persist to localStorage
+  // Persist to localStorage safely
   useEffect(() => {
-    localStorage.setItem('estudapro_subjects', JSON.stringify(subjects));
+    safeWriteStorage('estudapro_subjects', JSON.stringify(subjects));
   }, [subjects]);
 
   useEffect(() => {
-    localStorage.setItem('estudapro_logs', JSON.stringify(logs));
+    safeWriteStorage('estudapro_logs', JSON.stringify(logs));
   }, [logs]);
 
   useEffect(() => {
-    localStorage.setItem('estudapro_goals', JSON.stringify(goals));
+    safeWriteStorage('estudapro_goals', JSON.stringify(goals));
   }, [goals]);
 
   useEffect(() => {
-    localStorage.setItem('estudapro_theme', darkMode ? 'dark' : 'light');
+    safeWriteStorage('estudapro_theme', darkMode ? 'dark' : 'light');
     if (darkMode) {
       document.documentElement.classList.add('dark');
     } else {

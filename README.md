@@ -2,22 +2,16 @@
 
 Aplicação web estática para controle de estudos semanais e mensais, acompanhamento de tempo dedicado por matéria, metas de aprendizado e gráficos de desempenho em tempo real. Projetada para funcionar diretamente no navegador e ser hospedada gratuitamente no **GitHub Pages**.
 
-## Funcionalidades
+## Como Hospedar no GitHub Pages (Passo a Passo)
 
-- **Visão Semanal e Mensal**: Alternância rápida entre semana e mês com indicação clara dos dias estudados e dos dias sem registro, além de detalhamento completo do que foi estudado em cada dia.
-- **Gráficos de Desempenho em Tempo Real**: Gráficos interativos de barras diárias (empilhadas por matéria) e progresso em relação às metas semanais/mensais.
-- **Gestão de Matérias e Metas**: Cadastro de disciplinas por área, definição de metas semanais de horas e acompanhamento de objetivos de aprendizado.
-- **Cronômetro Pomodoro Integrado**: Ciclos de foco e pausa com registro automático da sessão ao concluir o tempo de estudo.
-- **100% Client-Side com Backup JSON**: Todos os dados ficam salvos localmente no navegador (`localStorage`), com suporte a exportação e importação de backup em arquivo `.json`.
+Este repositório já está configurado com caminho relativo (`base: './'` no `vite.config.ts`), arquivo `public/.nojekyll` e workflow automático em `.github/workflows/deploy.yml` usando **Node 22**.
 
-## Como Hospedar no GitHub Pages
+1. Envie todos os arquivos do projeto para a branch `main` (ou `master`) no GitHub.
+2. No seu repositório do GitHub, acesse **Settings → Pages**.
+3. Em **Build and deployment → Source**, selecione **GitHub Actions** (não deixe em *Deploy from a branch*, pois o código-fonte React/TypeScript precisa ser compilado para a pasta `dist/`).
+4. Aguarde a execução do workflow **Deploy to GitHub Pages** na aba **Actions**. Ao concluir com sucesso, o link oficial do GitHub Pages estará ativo.
 
-Este repositório já está configurado com caminho relativo (`base: './'` no `vite.config.ts`), arquivo `public/.nojekyll` e workflow automático em `.github/workflows/deploy.yml`.
-
-1. Crie um repositório no GitHub e envie este código para a branch `main`.
-2. No GitHub, acesse **Settings → Pages**.
-3. Em **Build and deployment → Source**, selecione **GitHub Actions**.
-4. A cada `push` na branch `main` (ou executando manualmente na aba **Actions**), o site será compilado e publicado automaticamente.
+> **Dica caso a tela fique branca:** Verifique em **Settings → Pages → Source** se a opção selecionada é **GitHub Actions** e confirme na aba **Actions** se o deploy foi concluído sem erros. Se a fonte estiver como *Deploy from a branch* apontando para a raiz `/`, o navegador tentará abrir o `index.html` de desenvolvimento (`/src/main.tsx`) e exibirá tela branca.
 
 ## Desenvolvimento Local
 
